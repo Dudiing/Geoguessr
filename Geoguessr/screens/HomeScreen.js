@@ -114,7 +114,9 @@ const HomeScreen = () => {
         {userLocation && <Marker coordinate={userLocation} title="Ubicación seleccionada" />}
       </MapView>
       <TouchableOpacity style={styles.button} onPress={handleCheckLocation}>
-        <Text style={styles.buttonText}>Verificar Ubicación</Text>     </TouchableOpacity>
+        <Text style={styles.buttonText}>Verificar Ubicación</Text>
+      </TouchableOpacity>
+
 
       {/* Textos de distancia y botones */}
       {modalVisible && (
