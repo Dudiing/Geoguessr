@@ -1,10 +1,28 @@
-import React from 'react';
-import HomeScreen from './screens/HomeScreen';
+// In App.js in a new project
 
-const App = () => {
+import * as React from 'react';
+import { View, Text } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+// Importa tus pantallas
+import GameScreen from './screens/PantallaJuego';
+import StartScreen from './screens/PantallaPrincipal';
+import ResultsScreen from './screens/PantallaResultado';
+
+
+const Stack = createNativeStackNavigator();
+
+function App() {
   return (
-    <HomeScreen />
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Start" screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Start" component={StartScreen} />
+        <Stack.Screen name="Game" component={GameScreen} />
+        <Stack.Screen name="Results" component={ResultsScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
-};
+}
+
 
 export default App;
