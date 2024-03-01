@@ -7,8 +7,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 // Importa tus pantallas
 import GameScreen from './screens/PantallaJuego';
 import StartScreen from './screens/PantallaPrincipal';
-import ResultsScreen from './screens/PantallaResultado';
-
 
 const Stack = createNativeStackNavigator();
 
@@ -18,7 +16,6 @@ function App() {
       <Stack.Navigator initialRouteName="Start" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Start" component={StartScreen} />
         <Stack.Screen name="Game" component={GameScreen} />
-        <Stack.Screen name="Results" component={ResultsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

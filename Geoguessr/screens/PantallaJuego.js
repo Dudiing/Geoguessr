@@ -1,335 +1,184 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, Button} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View, StyleSheet } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
+import { useNavigation } from '@react-navigation/native';
 import { db } from '../firebaseConfig';
 import { collection, getDocs } from 'firebase/firestore';
 import getDistance from 'geolib/es/getDistance';
+import { Button, Text } from 'react-native-paper';
 
 const PantallaJuego = () => {
-    const [showMarker, setShowMarker] = React.useState(false);
-    const [showPolyline, setShowPolyline] = React.useState(false);
-    const [showNextArrow, setShowNextArrow] = React.useState(false);
-    const [refresh, setRefresh] = useState("");
-    const [questionsList, setQuestionsList] = useState([]);
-    const [currentQuestionIndex, setQuestionIndex] = useState(0);
-    const mapRef = useRef(null);
-    const [markerPosition, setMarkerPosition] = useState(null);
-    const [markerDbPosition, setMarkerDbPosition] = useState(null);
-    const [distance, setDistance] = useState(null);
-    const [points, setPoints] = useState(0);
-    const [showPoints, setShowPoints] = useState(false);
-    const [totalPoints, setTotalPoints] = useState(0);
-    const [hasChecked, setHasChecked] = useState(false);
-    const { navigate } = useNavigation();
-  
-    const setMark = async () => {
-        if (mapRef.current && markerPosition === null) {
-          const camera = await mapRef.current.getCamera();
-          console.log("Latitud:", camera.center.latitude);
-          console.log("Longitud:", camera.center.longitude);
-          setMarkerPosition({ latitude: camera.center.latitude, longitude: camera.center.longitude });
-    
-        }
-    };
+  const [questionsList, setQuestionsList] = useState([]);
+  const [currentQuestionIndex, setQuestionIndex] = useState(0);
+  const [markerPosition, setMarkerPosition] = useState(null);
+  const [markerDbPosition, setMarkerDbPosition] = useState(null);
+  const [distance, setDistance] = useState(null);
+  const [points, setPoints] = useState(0);
+  const [totalPoints, setTotalPoints] = useState(0);
+  const [showPoints, setShowPoints] = useState(false);
+  const [showCheckLocation, setShowCheckLocation] = useState(true);
+  const { navigate } = useNavigation();
+  const mapRef = useRef(null);
 
-    const check = () => {
-      console.log("Check");
-     // if (currentQuestionIndex < questionsList.length-1){
-       // console.log(questionsList[currentQuestionIndex+1].Title);
-       if (markerPosition){
-        setShowMarker(true); 
-        const { latitude, longitude } = markerPosition;
-        const markerDb = {
-           latitude: parseFloat(questionsList[currentQuestionIndex].Lat),
-           longitude: parseFloat(questionsList[currentQuestionIndex].Lon),
-           };
+  const setCurrentQuestion = (question) => {
+      // Lógica para establecer la pregunta actual
+  };
 
-       const dist = getDistance(
-          {
-             latitude: markerDb.latitude,
-             longitude: markerDb.longitude,
-          },
-          { 
-            latitude, 
-            longitude 
-          });
-            
-           
-           setDistance(dist);
-           console.log("Distance: " + dist);   
-           console.log("Distance general:" + distance);
-           calculatePoints(dist);
-           setMarkerDbPosition(markerDb);
-           setShowPolyline(true);
+  const handleMapPress = (event) => {
+      const { coordinate } = event.nativeEvent;
+      setMarkerPosition(coordinate);
+  };
 
-           if (currentQuestionIndex <= questionsList.length -1){
+  const checkLocation = () => {
+      setShowCheckLocation(false);
+      if (markerPosition) {
+          const { latitude, longitude } = markerPosition;
+          const correctLocation = {
+              latitude: parseFloat(questionsList[currentQuestionIndex].Lat),
+              longitude: parseFloat(questionsList[currentQuestionIndex].Lon),
+          };
 
-           setShowNextArrow(true);
+          const dist = getDistance(
+              { latitude: correctLocation.latitude, longitude: correctLocation.longitude },
+              { latitude, longitude }
+          );
 
-          }
+          setDistance(dist);
+          calculatePoints(dist);
+          setMarkerDbPosition(correctLocation);
+          setShowPoints(true);
+      }
+  };
 
-          setHasChecked(true);
-       }
-      
-    };
+  const calculatePoints = (distMeters) => {
+      let newPoints = 0;
 
-    const nextQ = () => {
-      console.log("next question");
-     if (currentQuestionIndex < questionsList.length - 1) {
-      //console.log(questionsList[currentQuestionIndex + 1].Title);
-      setQuestionIndex(currentQuestionIndex + 1);
-      setShowMarker(false);
-      setShowPolyline(false);
-      setMarkerDbPosition(null);
-      setMarkerPosition(null);
-      setShowNextArrow(false);
-      setDistance(null);
-      setShowPoints(false);
-      setHasChecked(false);
-      setPoints(0);
-     }
-
-     else if (currentQuestionIndex == questionsList.length - 1){
-     // console.log("NEXT SCREEN");
-      navigate('Results', { totalPoints });
-     }
-
-    };
-
-    const calculatePoints = (distMeters) => {
-        let newPoints = 0;
-        
-      if (!hasChecked){
-        if (distMeters >= 0 && distMeters <= 300000){
-          setPoints(100);
+      if (distMeters >= 0 && distMeters <= 300000) {
           newPoints = 100;
-        }
-
-        else if (distMeters > 300000 && distMeters <= 700000) {
-          setPoints(50);
+      } else if (distMeters > 300000 && distMeters <= 700000) {
           newPoints = 50;
-        }
-        
-        else if (distMeters > 700000 && distMeters <= 1100000) {
-          setPoints(20);
+      } else if (distMeters > 700000 && distMeters <= 1100000) {
           newPoints = 20;
-        }
-
-        else if (distMeters > 1100000 && distMeters <= 1500000) {
-          setPoints(10);
+      } else if (distMeters > 1100000 && distMeters <= 1500000) {
           newPoints = 10;
-        }
-
-        else {
-          setPoints(0);
-        }
-      
-        setShowPoints(true);
-        setTotalPoints((prevTotalPoints) => prevTotalPoints + newPoints);
-        console.log("Total points: " + totalPoints);
-        console.log("has checked: " + hasChecked);
       }
 
-    };
+      setPoints(newPoints);
+      setTotalPoints(prevTotalPoints => prevTotalPoints + newPoints);
+  };
 
+  const nextQuestion = () => {
+      setShowCheckLocation(true);
+      setShowPoints(false);
+      setQuestionIndex(currentQuestionIndex + 1);
+      setMarkerPosition(null);
+      setMarkerDbPosition(null);
+  };
 
-    useEffect(() => { // Funció que es crida al començar. Ve a ser un OnCreate d'Android/start()
-      // Función para obtener todos los usuarios
+  useEffect(() => {
       const fetchQuestions = async () => {
-        try {
-          const qCol = collection(db, 'Ubicaciones');
-          const questionsSnapshot = await getDocs(qCol);
-          const qList = questionsSnapshot.docs.map(doc => doc.data());
-          setQuestionsList(qList);
-          console.log(qList[0].Title);
-        } catch (error) {
-          console.error("Error al obtener las preguntas:", error);
-          // Aquí puedes mostrar un mensaje de error al usuario, o manejarlo de otra manera
-        }
+          try {
+              const qCol = collection(db, 'Ubicaciones');
+              const questionsSnapshot = await getDocs(qCol);
+              const qList = questionsSnapshot.docs.map((doc) => doc.data());
+              setQuestionsList(qList);
+              if (qList.length > 0) {
+                  setCurrentQuestion(qList[0]);
+              }
+          } catch (error) {
+              console.error('Error fetching questions:', error);
+          }
       };
-    
-      fetchQuestions(); // Llama a la función al inicio
 
-    }, []);
+      fetchQuestions();
+  }, []);
 
-    return (
-      <View style={styles.container}>
-          <View style={styles.mapContainer}>
-              <MapView ref={mapRef}  style={{width:'100%', height:'100%'}}mapType='satellite'>
-                  {markerPosition && (
-                  <Marker coordinate={markerPosition} title="Marcador" description="Este es el centro del mapa" />
-                  )}
-                   {showMarker && (
-                    <Marker
-                    coordinate={
-                    {
-                    latitude: parseFloat(questionsList[currentQuestionIndex].Lat),
-                    longitude: parseFloat(questionsList[currentQuestionIndex].Lon)
-                    }}
-                    title="Marcador"
-                    description="Este es el centro del mapa" />
-                   )}
-                   {showPolyline && markerDbPosition && (
+  return (
+        <View style={styles.container}>
+            <MapView
+                ref={mapRef}
+                style={styles.map}
+                onPress={handleMapPress}
+            >
+                {markerPosition && <Marker coordinate={markerPosition} />}
+                {markerDbPosition && <Marker coordinate={markerDbPosition} />}
+                {markerPosition && markerDbPosition && (
                     <Polyline
-                    coordinates={[markerDbPosition, markerPosition]} //specify our coordinates
-                    strokeColor={"#000"}
-                    strokeWidth={3}
-                    lineDashPattern={[1]}
-                  />
-                   )}
-              </MapView>
-              {distance && (
-              <View style={styles.distanceContainer}>
-                  <Text style={styles.distance}>{"Distance: " + distance +"m"}</Text>
-              </View>
-               )}
-          </View> 
-          <View style={styles.footer}>
-            {questionsList.length > 0 ?  (
-                  <Text style={styles.question}>{questionsList[currentQuestionIndex].Title}</Text>
-                ) : (
-                  <Text>Loading quizz...</Text>
+                        coordinates={[markerPosition, markerDbPosition]}
+                        strokeColor="#FF5733"
+                        strokeWidth={2}
+                    />
                 )}
-            {showPoints && (
-              <View style={styles.pointsContainer}>
-              <Text style={styles.pointsLbl}>Points:</Text>
-              <Text style={styles.points}>{points}</Text>
-            </View>
+            </MapView>
+            {showPoints && <Text style={styles.points}>{`Puntos: ${points}`}</Text>}
+            {showCheckLocation && (
+                <Button
+                    mode="contained"
+                    style={styles.button}
+                    onPress={checkLocation}
+                >
+                    Verificar Ubicación
+                </Button>
             )}
-          </View>          
-      </View>
-      
-  );
+            {showPoints && (
+                <Button
+                    mode="contained"
+                    style={styles.button}
+                    onPress={nextQuestion}
+                >
+                    Siguiente Pregunta
+                </Button>
+            )}
+            <Text style={styles.question}>{questionsList[currentQuestionIndex]?.Title}</Text>
+            <Text style={styles.totalPoints}>{`Puntos Totales: ${totalPoints}`}</Text>
+        </View>
+    );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#c2c2c4',
-        width: '100%',
-        height: '100%',   
+        backgroundColor: '#F9F7F6',
     },
-    buttonsContainer:  {
-      flexDirection: 'row',
-      height: '9%',
-      width: '90%',
-      marginTop: '15%',
-      zIndex: 2,
-    //  backgroundColor: 'blue',
-      justifyContent: 'center',
-      marginBottom: '5%',
-    },
-    checkContainer:{
-      height: '100%',
-      width: '40%',
-    //  backgroundColor: 'red',
-      alignItems: 'center',
-      justifyContent: 'center',
-      borderRadius: 70,
-      marginLeft: '15%',
-    },
-    setMarkContainer: {
-      height: '100%',
-      width: '40%',
-    //  backgroundColor: 'red',
-      alignItems: 'center',
-      justifyContent: 'center',
-      borderRadius: 70,
-    },
-    btn: {
-        position: 'absolute',
-        width: '130%',
-        height: '130%',
-        zIndex: 2,
-    },
-    mapContainer: {
-        width: '90%',
-        height: '45%',
-        backgroundColor: 'blue',
-        borderRadius: 20,
-        overflow: 'hidden',
-        zIndex: 1,
-       // marginBottom: '%',
-        borderWidth: 5,
-    },
-    mapCenterMarkerView: {
-        position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        justifyContent: "center",
-        alignItems: "center",
-
-    },
-    footer: {
-      flex: 1,
-      height: '20%',
-    //  backgroundColor: 'blue',
-      width: '100%',
-      zIndex: 3,
-     // marginTop: '5%',
-      alignItems: 'center',
-      justifyContent: 'top',
-      padding: 20,
-      
-    },
-    question:{
-      fontSize: 25,
-      textAlign: 'center',
-      color: '#232324',
-
-    },
-    arrowContainer: {
-     // backgroundColor: 'green',
-      width: '12%',
-      height: '15%',
-      marginTop: '8%',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    arrow: {
-      width: '100%',
-      height: '100%',
-    },
-    distanceContainer:{
-      position: 'absolute',
-      height: '8%',
-      width: '90%',
-      marginLeft: '5%',
-     // backgroundColor: 'white',
-      //alignItems: "center",
-      justifyContent: 'center',
-      marginTop: '3%',
-    },
-    distance: {
-      fontWeight: 'bold',
-      fontSize: 18,
-      color: 'white',
-      textAlign: 'center',
-    },
-    pointsContainer: {
-      flexDirection: 'row',
-      height: '15%',
-      width: '100%',
-     // backgroundColor: 'yellow',
-      marginTop: '10%',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    pointsLbl: {
-      fontSize: 25,
+    map: {
+        flex: 1,
     },
     points: {
-      fontSize: 25,
-      textAlign: 'center',
-      color: '#232324',
-      marginLeft: '3%',
+        fontSize: 20,
+        marginTop: 10,
+        textAlign: 'center',
+        fontWeight: 'bold',
+        color: '#333',
     },
-
+    button: {
+        backgroundColor: '#4CAF50',
+        paddingVertical: 15,
+        paddingHorizontal: 30,
+        borderRadius: 10,
+        marginTop: 20,
+        alignSelf: 'center',
+    },
+    question: {
+        marginTop: 20,
+        fontSize: 18,
+        textAlign: 'center',
+        color: '#333',
+    },
+    totalPoints: {
+        fontSize: 20,
+        marginTop: 10,
+        textAlign: 'center',
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    textInput: {
+        height: 40,
+        borderColor: 'gray',
+        borderWidth: 1,
+        marginTop: 20,
+        marginHorizontal: 20,
+        paddingHorizontal: 10,
+    },
 });
 
 export default PantallaJuego;

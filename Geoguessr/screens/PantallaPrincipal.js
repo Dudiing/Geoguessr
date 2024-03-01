@@ -1,20 +1,16 @@
-import { TouchableOpacity, View, StyleSheet, Image, Text } from "react-native";
-import React, { useRef, useState } from 'react';
-import { useNavigation } from '@react-navigation/native';
+import React from 'react';
+import { TouchableOpacity, View, StyleSheet, Text } from "react-native";
 
 const PantallaPrincipal = ({ navigation }) => {
-    
   const onPress = () => {
     navigation.navigate('Game');
-    console.log('button clicked');
   };
 
   return (
     <View style={styles.container}>
-
       <TouchableOpacity style={styles.btnContainer} onPress={onPress}>
         <View style={styles.btn}>
-          <Text>Comenzar Juego</Text>
+          <Text style={styles.btnText}>Comenzar Juego</Text>
         </View>
       </TouchableOpacity>
     </View>
@@ -24,37 +20,39 @@ const PantallaPrincipal = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        height: '100%',
-        width: '100%',
-        backgroundColor: '#c2c2c4',
         alignItems: 'center',
-    },
-    picContainer: {
-        flex: 1,
-        width: '100%',
-        height: '50%',
+        justifyContent: 'center',
     },
     backgroundPic: {
         position: 'absolute',
         width: '100%',
         height: '100%',
-        marginTop: '7%',
-    },   
+        top: 0,
+        left: 0,
+    },
     btnContainer: {
-        height: '10%',
-        width: '40%',
+        backgroundColor: 'white',
+        borderRadius: 50,
+        width: 200,
+        height: 60,
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: 70,
-        zIndex: 2,
-        marginTop: '10%',
-        backgroundColor: 'white', // Color de fondo agregado para visualización
+        shadowColor: 'rgba(0, 0, 0, 0.25)',
+        shadowOffset: { width: 0, height: 2 },
+        shadowRadius: 4,
+        elevation: 5,
     },
     btn: {
-        position: 'absolute',
         width: '100%',
         height: '100%',
-        zIndex: 2,
+        borderRadius: 50,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    btnText: {
+        fontSize: 18,
+        color: 'rgba(31, 41, 55, 1)',
+        fontWeight: 'bold',
     },
 });
 
